@@ -40,4 +40,43 @@ For more information, please refer to the following: (<https://maziarraissi.gith
 
 # 学习笔记
 
--  continuous_time_inference (Schrodinger) 
+ 
+
+### 核心路径清单
+
+1. **第一步：Schrodinger (练手基础)**
+* **目标：** 理解“物理方程怎么写进代码”。
+* **TODO：**
+* 找到 `net_f` 函数，确认它就是 Schrödinger 方程的程序化体现。
+* 运行程序，确保能看到 Loss 下降过程。
+
+
+* **为什么：** 这是最标准的正向问题，代码最干净。
+
+
+2. **第二步：Navier-Stokes (工业核心)**
+* **目标：** 理解“怎么从数据里挖出物理参数”。
+* **TODO：**
+* 搜索 `tf.Variable`。找到那些被定义为“可变”的物理系数（如 $\lambda_1, \lambda_2$）。
+* 理解它是如何通过拟合观测数据，把这些系数“反向训练”出来的。
+
+
+* **为什么：** 这是 PINNs 的核心价值所在，也是工业界最关心的能力。
+
+
+3. **第三步：KdV (进阶模型)**
+* **目标：** 理解“如何处理复杂时间演化”。
+* **TODO：**
+* 找到它使用 Runge-Kutta 步进逻辑的部分。
+
+
+* **为什么：** 当你面临时间跨度很长的物理仿真时，普通 PINNs 会崩溃，这时候必须用这种分步处理的方法。
+
+
+
+---
+ 
+
+---
+
+ 
