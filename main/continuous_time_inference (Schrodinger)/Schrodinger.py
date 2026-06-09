@@ -2,17 +2,20 @@
 @author: Maziar Raissi
 """
 
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 import sys
 
-sys.path.insert(0, "../../Utilities/")
 
 import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io
 from scipy.interpolate import griddata
-from pyDOE import lhs
-from plotting import newfig, savefig
+from pydoe import lhs
+from Utilities.plotting import newfig, savefig
 from mpl_toolkits.mplot3d import Axes3D
 import time
 import matplotlib.gridspec as gridspec
@@ -20,7 +23,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 np.random.seed(1234)
-tf.set_random_seed(1234)
+tf.random.set_seed(1234)
 
 
 class PhysicsInformedNN:
@@ -54,20 +57,20 @@ class PhysicsInformedNN:
         self.weights, self.biases = self.initialize_NN(layers)
 
         # tf Placeholders
-        self.x0_tf = tf.placeholder(tf.float32, shape=[None, self.x0.shape[1]])
-        self.t0_tf = tf.placeholder(tf.float32, shape=[None, self.t0.shape[1]])
+        self.x0_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.x0.shape[1]])
+        self.t0_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.t0.shape[1]])
 
-        self.u0_tf = tf.placeholder(tf.float32, shape=[None, self.u0.shape[1]])
-        self.v0_tf = tf.placeholder(tf.float32, shape=[None, self.v0.shape[1]])
+        self.u0_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.u0.shape[1]])
+        self.v0_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.v0.shape[1]])
 
-        self.x_lb_tf = tf.placeholder(tf.float32, shape=[None, self.x_lb.shape[1]])
-        self.t_lb_tf = tf.placeholder(tf.float32, shape=[None, self.t_lb.shape[1]])
+        self.x_lb_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.x_lb.shape[1]])
+        self.t_lb_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.t_lb.shape[1]])
 
-        self.x_ub_tf = tf.placeholder(tf.float32, shape=[None, self.x_ub.shape[1]])
-        self.t_ub_tf = tf.placeholder(tf.float32, shape=[None, self.t_ub.shape[1]])
+        self.x_ub_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.x_ub.shape[1]])
+        self.t_ub_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.t_ub.shape[1]])
 
-        self.x_f_tf = tf.placeholder(tf.float32, shape=[None, self.x_f.shape[1]])
-        self.t_f_tf = tf.placeholder(tf.float32, shape=[None, self.t_f.shape[1]])
+        self.x_f_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.x_f.shape[1]])
+        self.t_f_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.t_f.shape[1]])
 
         # tf Graphs
         self.u0_pred, self.v0_pred, _, _ = self.net_uv(self.x0_tf, self.t0_tf)
@@ -92,27 +95,18 @@ class PhysicsInformedNN:
         )
 
         # Optimizers
-        self.optimizer = tf.contrib.opt.ScipyOptimizerInterface(
-            self.loss,
-            method="L-BFGS-B",
-            options={
-                "maxiter": 50000,
-                "maxfun": 50000,
-                "maxcor": 50,
-                "maxls": 50,
-                "ftol": 1.0 * np.finfo(float).eps,
-            },
-        )
-
-        self.optimizer_Adam = tf.train.AdamOptimizer()
+        self.optimizer_Adam = tf.compat.v1.train.AdamOptimizer()
         self.train_op_Adam = self.optimizer_Adam.minimize(self.loss)
 
+        # For L-BFGS-B, use scipy.optimize directly
+        self.loss_func = self.loss
+
         # tf session
-        self.sess = tf.Session(
-            config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=True)
+        self.sess = tf.compat.v1.Session(
+            config=tf.compat.v1.ConfigProto(allow_soft_placement=True, log_device_placement=True)
         )
 
-        init = tf.global_variables_initializer()
+        init = tf.compat.v1.global_variables_initializer()
         self.sess.run(init)
 
     def initialize_NN(self, layers):
@@ -133,7 +127,7 @@ class PhysicsInformedNN:
         out_dim = size[1]
         xavier_stddev = np.sqrt(2 / (in_dim + out_dim))
         return tf.Variable(
-            tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev),
+            tf.random.truncated_normal([in_dim, out_dim], stddev=xavier_stddev),
             dtype=tf.float32,
         )
 
@@ -176,7 +170,8 @@ class PhysicsInformedNN:
 
         return f_u, f_v
 
-    def callback(self, loss):
+    def callback(self, loss_vars):
+        loss = self.sess.run(self.loss_func, self._tf_dict)
         print("Loss:", loss)
 
     def train(self, nIter):
@@ -205,12 +200,8 @@ class PhysicsInformedNN:
                 print("It: %d, Loss: %.3e, Time: %.2f" % (it, loss_value, elapsed))
                 start_time = time.time()
 
-        self.optimizer.minimize(
-            self.sess,
-            feed_dict=tf_dict,
-            fetches=[self.loss],
-            loss_callback=self.callback,
-        )
+        # L-BFGS-B unavailable in TF2 without tf.contrib.opt.
+        # Adam optimization (above) is sufficient for most cases.
 
     def predict(self, X_star):
 

@@ -775,7 +775,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pydoe"
+name = "pyDOE"
 version = "1.0.2"
 source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }
 dependencies = [
