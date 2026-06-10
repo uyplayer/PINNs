@@ -5,6 +5,7 @@ description = "Physics-Informed Neural Networks with PyTorch"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "deepxde>=1.15.0",
     "matplotlib>=3.10.9",
     "numpy>=2.4.6",
     "pydoe>=1.0.2",
