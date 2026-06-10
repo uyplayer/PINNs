@@ -3,12 +3,14 @@
 """
 
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 import sys
 
 
 import tensorflow as tf
+
 tf.compat.v1.disable_eager_execution()
 import numpy as np
 import matplotlib.pyplot as plt
@@ -57,20 +59,40 @@ class PhysicsInformedNN:
         self.weights, self.biases = self.initialize_NN(layers)
 
         # tf Placeholders
-        self.x0_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.x0.shape[1]])
-        self.t0_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.t0.shape[1]])
+        self.x0_tf = tf.compat.v1.placeholder(
+            tf.float32, shape=[None, self.x0.shape[1]]
+        )
+        self.t0_tf = tf.compat.v1.placeholder(
+            tf.float32, shape=[None, self.t0.shape[1]]
+        )
 
-        self.u0_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.u0.shape[1]])
-        self.v0_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.v0.shape[1]])
+        self.u0_tf = tf.compat.v1.placeholder(
+            tf.float32, shape=[None, self.u0.shape[1]]
+        )
+        self.v0_tf = tf.compat.v1.placeholder(
+            tf.float32, shape=[None, self.v0.shape[1]]
+        )
 
-        self.x_lb_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.x_lb.shape[1]])
-        self.t_lb_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.t_lb.shape[1]])
+        self.x_lb_tf = tf.compat.v1.placeholder(
+            tf.float32, shape=[None, self.x_lb.shape[1]]
+        )
+        self.t_lb_tf = tf.compat.v1.placeholder(
+            tf.float32, shape=[None, self.t_lb.shape[1]]
+        )
 
-        self.x_ub_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.x_ub.shape[1]])
-        self.t_ub_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.t_ub.shape[1]])
+        self.x_ub_tf = tf.compat.v1.placeholder(
+            tf.float32, shape=[None, self.x_ub.shape[1]]
+        )
+        self.t_ub_tf = tf.compat.v1.placeholder(
+            tf.float32, shape=[None, self.t_ub.shape[1]]
+        )
 
-        self.x_f_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.x_f.shape[1]])
-        self.t_f_tf = tf.compat.v1.placeholder(tf.float32, shape=[None, self.t_f.shape[1]])
+        self.x_f_tf = tf.compat.v1.placeholder(
+            tf.float32, shape=[None, self.x_f.shape[1]]
+        )
+        self.t_f_tf = tf.compat.v1.placeholder(
+            tf.float32, shape=[None, self.t_f.shape[1]]
+        )
 
         # tf Graphs
         self.u0_pred, self.v0_pred, _, _ = self.net_uv(self.x0_tf, self.t0_tf)
@@ -103,7 +125,9 @@ class PhysicsInformedNN:
 
         # tf session
         self.sess = tf.compat.v1.Session(
-            config=tf.compat.v1.ConfigProto(allow_soft_placement=True, log_device_placement=True)
+            config=tf.compat.v1.ConfigProto(
+                allow_soft_placement=True, log_device_placement=True
+            )
         )
 
         init = tf.compat.v1.global_variables_initializer()
@@ -366,4 +390,4 @@ if __name__ == "__main__":
     ax.set_ylim([-0.1, 5.1])
     ax.set_title("$t = %.2f$" % (t[125]), fontsize=10)
 
-    # savefig('./figures/NLS')
+    savefig("./figures/NLS")
